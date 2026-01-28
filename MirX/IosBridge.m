@@ -9,6 +9,7 @@
 #import "IosBridge.h"
 #import "NetworkStateMonitor.h"
 #import "PowerStateMonitor.h"
+#import "Config.h"
 #import <UIKit/UIKit.h>
 
 @interface IosBridge () <WKScriptMessageHandler>
@@ -155,6 +156,22 @@
     NSString *js = [NSString stringWithFormat:@"try{ if(window.setPowerState){ setPowerState(%ld,%ld); } }catch(e){}",
                     (long)state, (long)val];
     [self evalJS:js];
+}
+
+- (void)updateSafeAreaWithViewController:(UIViewController *)viewController {
+    NSArray<NSNumber *> *safeArea = @[@0, @0, @0, @0, @0];
+    if (@available(iOS 11.0, *)) {
+        UIEdgeInsets insets = viewController.view.safeAreaInsets;
+        BOOL hasNotchOrIsland = insets.top > 20.0 || insets.bottom > 0.0;
+        safeArea = @[
+            @(hasNotchOrIsland ? 1 : 0),
+            @(insets.left),
+            @(insets.top),
+            @(insets.right),
+            @(insets.bottom)
+        ];
+    }
+    Config.safeArea = safeArea;
 }
 
 - (void)evalJS:(NSString *)js {
