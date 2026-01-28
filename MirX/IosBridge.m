@@ -9,8 +9,9 @@
 #import "IosBridge.h"
 #import "NetworkStateMonitor.h"
 #import "PowerStateMonitor.h"
+#import <UIKit/UIKit.h>
 
-@interface IosBridge ()
+@interface IosBridge () <WKScriptMessageHandler>
 @property (nonatomic, weak) WKWebView *webView;
 @property (nonatomic, strong) NetworkStateMonitor *networkMonitor;
 @property (nonatomic, strong) PowerStateMonitor *powerMonitor;
@@ -25,6 +26,7 @@
     if (self) {
         _webView = webView;
         _gameReady = NO;
+        [webView.configuration.userContentController addScriptMessageHandler:self name:@"iosBridge"];
 
         __weak typeof(self) weakSelf = self;
 
@@ -52,6 +54,7 @@
 }
 
 - (void)dealloc {
+    [_webView.configuration.userContentController removeScriptMessageHandlerForName:@"iosBridge"];
     [_networkMonitor stop];
     [_powerMonitor stop];
 }
@@ -189,6 +192,102 @@
 
     NSString *pretty = [[NSString alloc] initWithData:prettyData encoding:NSUTF8StringEncoding];
     return pretty ?: jsonString;
+}
+
+#pragma mark - JS -> iOS
+
+- (void)userContentController:(WKUserContentController *)userContentController
+      didReceiveScriptMessage:(WKScriptMessage *)message {
+    if (![message.name isEqualToString:@"iosBridge"]) {
+        return;
+    }
+
+    if (![message.body isKindOfClass:[NSDictionary class]]) {
+        return;
+    }
+
+    NSDictionary *body = (NSDictionary *)message.body;
+    NSString *action = body[@"action"];
+    id data = body[@"data"];
+    if (![action isKindOfClass:[NSString class]]) {
+        return;
+    }
+
+    [self dispatchAction:action data:data];
+}
+
+#pragma mark - Action Dispatcher
+
+- (void)dispatchAction:(NSString *)action data:(id)data {
+    if ([action isEqualToString:@"pay"]) {
+        [self handlePay:data];
+    } else if ([action isEqualToString:@"trigger"]) {
+        [self handleCqss2JsSdkTrigger:data];
+    } else {
+        NSLog(@"====== unknow action: %@ ======", action);
+    }
+}
+
+#pragma mark - SDK Data Report
+
+- (void)handleCqss2JsSdkTrigger:(id)body {
+    if (![body isKindOfClass:[NSArray class]]) {
+        NSLog(@"Cqss2JsSdkTrigger: invalid body: %@", body);
+        return;
+    }
+
+    NSArray *arr = (NSArray *)body;
+    if (arr.count < 2) {
+        NSLog(@"Cqss2JsSdkTrigger: invalid body: %@", body);
+        return;
+    }
+
+    NSString *eventName = [arr[0] isKindOfClass:[NSString class]] ? arr[0] : @"";
+    NSString *jsonString = [arr[1] isKindOfClass:[NSString class]] ? arr[1] : @"";
+
+    NSLog(@"====== Cqss2JsSdkTrigger ======");
+    NSLog(@"eventName: %@", eventName);
+    NSLog(@"jsonString: %@", jsonString);
+    NSLog(@"rawBody: %@", arr);
+    NSLog(@"===============================");
+
+    if (eventName.length > 0 || jsonString.length > 0) {
+        [self trigger:eventName jsonString:jsonString];
+    }
+}
+
+#pragma mark - Pay Handler
+
+- (void)handlePay:(id)data {
+    if (![data isKindOfClass:[NSString class]]) {
+        [self showAlertWithTitle:@"Pay Error" message:@"data 不是 JSON 字符串"];
+        return;
+    }
+
+    NSString *jsonString = (NSString *)data;
+    [self showAlertWithTitle:@"pay" message:jsonString];
+}
+
+#pragma mark - Alert Helper
+
+- (void)showAlertWithTitle:(NSString *)title message:(NSString *)message {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIWindowScene *scene = (UIWindowScene *)UIApplication.sharedApplication.connectedScenes.anyObject;
+        if (![scene isKindOfClass:[UIWindowScene class]]) {
+            return;
+        }
+        UIWindow *window = scene.windows.firstObject;
+        UIViewController *rootVC = window.rootViewController;
+        if (!rootVC) {
+            return;
+        }
+
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                       message:message
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:nil]];
+        [rootVC presentViewController:alert animated:YES completion:nil];
+    });
 }
 
 @end
