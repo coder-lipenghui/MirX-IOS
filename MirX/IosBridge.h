@@ -14,6 +14,7 @@
 
 @class NetworkStateMonitor;
 @class PowerStateMonitor;
+@class UIViewController;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -37,6 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)trigger:(NSString *)eventName jsonString:(NSString *)jsonString;
 - (void)triggerArray:(NSString *)bodyJsonArrayString;
+- (void)updateSafeAreaWithViewController:(UIViewController *)viewController;
 
 @end
 

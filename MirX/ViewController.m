@@ -60,6 +60,11 @@
     
 }
 
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    [self.iosBridge updateSafeAreaWithViewController:self];
+}
+
 #pragma mark - WKNavigationDelegate (可选：打印加载失败原因)
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
     NSLog(@"didFailNavigation: %@", error);
