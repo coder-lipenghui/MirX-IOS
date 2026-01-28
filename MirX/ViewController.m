@@ -21,6 +21,7 @@
 
     self.view.backgroundColor = [UIColor blackColor]; // 防止露底显白边
     WKWebViewConfiguration * config = [[WKWebViewConfiguration alloc] init];
+    config.userContentController = [[WKUserContentController alloc] init];
     WKWebView *webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
     self.webView = webView;
     
