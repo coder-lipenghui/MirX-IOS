@@ -33,6 +33,10 @@ NS_ASSUME_NONNULL_BEGIN
 // 获取/绑定监测器
 @property (nonatomic, strong, readonly) NetworkStateMonitor *networkMonitor;
 @property (nonatomic, strong, readonly) PowerStateMonitor *powerMonitor;
+@property (nonatomic, assign, readonly) NSInteger lastPlatformId;
+
+- (void)trigger:(NSString *)eventName jsonString:(NSString *)jsonString;
+- (void)triggerArray:(NSString *)bodyJsonArrayString;
 
 @end
 
