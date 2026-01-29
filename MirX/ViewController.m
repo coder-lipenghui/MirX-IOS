@@ -19,6 +19,11 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
+    if (self.accountName.length > 0) {
+        self.navigationItem.title = self.accountName;
+        NSLog(@"Login account: %@", self.accountName);
+    }
+
     self.view.backgroundColor = [UIColor blackColor]; // 防止露底显白边
     WKWebViewConfiguration * config = [[WKWebViewConfiguration alloc] init];
     config.userContentController = [[WKUserContentController alloc] init];
