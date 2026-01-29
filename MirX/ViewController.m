@@ -23,7 +23,24 @@
         self.navigationItem.title = self.accountName;
         NSLog(@"Login account: %@", self.accountName);
     }
+    
+    NSString *gameEntrace=@"http://192.168.26.244:9001/index.html?platformID=10001&serverIp=192.168.30.40:43001&serverID=1&username=look3&clientType=0&roleType=2&resourceIp=http://192.168.26.244:9001/&localWeb=1";
+    
+    NSDictionary *params = @{
+        @"platformID": @1005,
+        @"serverIp": @"192.168.30.40:43001",
+        @"serverID": @1,
+        @"username": self.accountName,
+        @"clientType": @0,
+        @"resourceIp": @"http://192.168.26.244:9001/",
+        @"localWeb": @1,
+        @"roleType": @2,
+        @"safeArea":@"1,43,43,43,43"
+    };
 
+    NSURL *entrance = [self buildURL:@"http://192.168.26.244:9001/index.html"
+                            params:params];
+    
     self.view.backgroundColor = [UIColor blackColor]; // 防止露底显白边
     WKWebViewConfiguration * config = [[WKWebViewConfiguration alloc] init];
     config.userContentController = [[WKUserContentController alloc] init];
@@ -58,13 +75,27 @@
     [webView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
     [webView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
     ]];
-
-    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://192.168.30.40"]]];
     
-    
+    [webView loadRequest:[NSURLRequest requestWithURL:entrance]];
     
 }
+- (NSURL *)buildURL:(NSString *)baseUrl
+             params:(NSDictionary<NSString *, id> *)params {
 
+    NSURLComponents *components =
+        [NSURLComponents componentsWithString:baseUrl];
+
+    NSMutableArray<NSURLQueryItem *> *items = [NSMutableArray array];
+
+    [params enumerateKeysAndObjectsUsingBlock:^(NSString *key, id obj, BOOL *stop) {
+        if (!obj || obj == [NSNull null]) return;
+        [items addObject:[NSURLQueryItem queryItemWithName:key
+                                                     value:[obj description]]];
+    }];
+
+    components.queryItems = items;
+    return components.URL;
+}
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     [self.iosBridge updateSafeAreaWithViewController:self];
