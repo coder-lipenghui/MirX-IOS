@@ -8,10 +8,13 @@
 #import "ViewController.h"
 #import <WebKit/WebKit.h>
 #import "IosBridge.h"
+#import "Config.h"
 
 @interface ViewController () <WKNavigationDelegate, WKUIDelegate>
 @property (nonatomic, strong) WKWebView *webView;
 @property (nonatomic, strong) IosBridge *iosBridge;
+@property (nonatomic, assign) BOOL didLoadRequest;
+@property (nonatomic, assign) BOOL safeAreaReady;
 @end
 
 @implementation ViewController
@@ -23,23 +26,6 @@
         self.navigationItem.title = self.accountName;
         NSLog(@"Login account: %@", self.accountName);
     }
-    
-    NSString *gameEntrace=@"http://192.168.26.244:9001/index.html?platformID=10001&serverIp=192.168.30.40:43001&serverID=1&username=look3&clientType=0&roleType=2&resourceIp=http://192.168.26.244:9001/&localWeb=1";
-    
-    NSDictionary *params = @{
-        @"platformID": @1005,
-        @"serverIp": @"192.168.30.40:43001",
-        @"serverID": @1,
-        @"username": self.accountName,
-        @"clientType": @0,
-        @"resourceIp": @"http://192.168.26.244:9001/",
-        @"localWeb": @1,
-        @"roleType": @2,
-        @"safeArea":@"1,43,43,43,43"
-    };
-
-    NSURL *entrance = [self buildURL:@"http://192.168.26.244:9001/index.html"
-                            params:params];
     
     self.view.backgroundColor = [UIColor blackColor]; // 防止露底显白边
     WKWebViewConfiguration * config = [[WKWebViewConfiguration alloc] init];
@@ -76,9 +62,38 @@
     [webView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
     ]];
     
-    [webView loadRequest:[NSURLRequest requestWithURL:entrance]];
-    
 }
+
+- (void)loadGameIfNeeded {
+    if (self.didLoadRequest || !self.safeAreaReady) {
+        return;
+    }
+
+    NSArray<NSNumber *> *safeArea = Config.safeArea;
+    NSMutableArray<NSString *> *safeAreaParts = [NSMutableArray array];
+    for (NSNumber *value in safeArea) {
+        [safeAreaParts addObject:value.stringValue];
+    }
+    NSString *safeAreaValue = [safeAreaParts componentsJoinedByString:@","];
+
+    NSDictionary *params = @{
+        @"platformID": @1005,
+        @"serverIp": @"192.168.30.40:43001",
+        @"serverID": @1,
+        @"username": self.accountName,
+        @"clientType": @0,
+        @"resourceIp": @"http://192.168.26.244:9001/",
+        @"localWeb": @1,
+        @"roleType": @2,
+        @"safeArea": safeAreaValue
+    };
+
+    NSURL *entrance = [self buildURL:@"http://192.168.26.244:9001/index.html"
+                              params:params];
+    [self.webView loadRequest:[NSURLRequest requestWithURL:entrance]];
+    self.didLoadRequest = YES;
+}
+
 - (NSURL *)buildURL:(NSString *)baseUrl
              params:(NSDictionary<NSString *, id> *)params {
 
@@ -99,6 +114,8 @@
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     [self.iosBridge updateSafeAreaWithViewController:self];
+    self.safeAreaReady = YES;
+    [self loadGameIfNeeded];
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
