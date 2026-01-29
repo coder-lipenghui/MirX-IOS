@@ -159,15 +159,16 @@
 }
 
 - (void)updateSafeAreaWithViewController:(UIViewController *)viewController {
+    NSLog(@"屏幕pt信息{height:%f} {width:%f}",_webView.bounds.size.height,_webView.bounds.size.width);
     NSArray<NSNumber *> *safeArea = @[@0, @0, @0, @0, @0];
     if (@available(iOS 11.0, *)) {
         UIEdgeInsets insets = viewController.view.safeAreaInsets;
         BOOL hasNotchOrIsland = insets.top > 20.0 || insets.bottom > 0.0;
         safeArea = @[
             @(hasNotchOrIsland ? 1 : 0),
-            @(insets.left),
+            @(insets.left*(1334/_webView.bounds.size.width)),
             @(insets.top),
-            @(insets.right),
+            @(insets.right*(1334/_webView.bounds.size.width)),
             @(insets.bottom)
         ];
     }
