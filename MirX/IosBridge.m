@@ -164,11 +164,15 @@
     if (@available(iOS 11.0, *)) {
         UIEdgeInsets insets = viewController.view.safeAreaInsets;
         BOOL hasNotchOrIsland = insets.top > 20.0 || insets.bottom > 0.0;
+        CGFloat webViewWidth = _webView.bounds.size.width;
+        CGFloat designWidth = (CGFloat)Config.designResolutionWidth;
+        CGFloat safeAreaScale = webViewWidth > 0 ? (designWidth / webViewWidth) : 1.0;
+        CGFloat scaledInset = insets.right * safeAreaScale;
         safeArea = @[
             @(hasNotchOrIsland ? 1 : 0),
-            @(insets.left*(1334/_webView.bounds.size.width)),
+            @(scaledInset),
             @(insets.top),
-            @(insets.right*(1334/_webView.bounds.size.width)),
+            @(scaledInset),
             @(insets.bottom)
         ];
     }
@@ -270,6 +274,64 @@
     NSLog(@"===============================");
 
     if (eventName.length > 0 || jsonString.length > 0) {
+        NSDictionary *json = nil;
+        if (jsonString.length > 0) {
+            NSData *data = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+            if (data) {
+                id jsonObj = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+                if ([jsonObj isKindOfClass:[NSDictionary class]]) {
+                    json = (NSDictionary *)jsonObj;
+                }
+            }
+        }
+
+        if (json) {
+            id platformIdValue = json[@"platform_id"];
+            if ([platformIdValue respondsToSelector:@selector(integerValue)]) {
+                Config.distributionId = [platformIdValue integerValue];
+            }
+
+            id serverIdValue = json[@"server_id"];
+            if ([serverIdValue respondsToSelector:@selector(integerValue)]) {
+                Config.serverId = [serverIdValue integerValue];
+            }
+
+            id playerIdValue = json[@"player_id"];
+            if (playerIdValue && playerIdValue != [NSNull null]) {
+                Config.roleId = [NSString stringWithFormat:@"%@", playerIdValue];
+            }
+
+            id playerNameValue = json[@"player_name"];
+            if ([playerNameValue isKindOfClass:[NSString class]]) {
+                Config.roleName = playerNameValue;
+            } else if (playerNameValue && playerNameValue != [NSNull null]) {
+                Config.roleName = [playerNameValue description];
+            }
+
+            id levelValue = json[@"level"];
+            if ([levelValue respondsToSelector:@selector(integerValue)]) {
+                Config.roleLevel = [levelValue integerValue];
+            }
+        }
+
+        if ([eventName isEqualToString:@"createRole"]) {
+            id timestamp = json[@"timestamp"];
+            if ([timestamp respondsToSelector:@selector(longLongValue)]) {
+                Config.roleCreateTime = [timestamp longLongValue];
+            }
+            // TODO: report create role if needed.
+        } else if ([eventName isEqualToString:@"levelUp"]) {
+            id timestamp = json[@"timestamp"];
+            if ([timestamp respondsToSelector:@selector(longLongValue)]) {
+                Config.roleUpdateTime = [timestamp longLongValue];
+            }
+            // TODO: report role level up if needed.
+        } else if ([eventName isEqualToString:@"EnterGame"]) {
+            // TODO: report enter game if needed.
+        } else if ([eventName isEqualToString:@"InitMainViewFinish"]) {
+            [self onGameReady];
+        }
+
         [self trigger:eventName jsonString:jsonString];
     }
 }

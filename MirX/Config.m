@@ -14,6 +14,8 @@ static NSString *ConfigAppId = @"";
 static NSString *ConfigAppKey = @"";
 static NSString *ConfigBuglyAppId = @"cb437e2282";
 static NSArray<NSNumber *> *ConfigSafeArea = nil;
+static NSInteger ConfigDesignResolutionWidth = 1334;
+static NSInteger ConfigDesignResolutionHeight = 750;
 
 static NSString *ConfigCrISBN = @"";
 static NSString *ConfigCrNumber = @"";
@@ -140,6 +142,22 @@ static NSString *ConfigServerName = @"";
 
 + (void)setSafeArea:(NSArray<NSNumber *> *)safeArea {
     ConfigSafeArea = [safeArea copy];
+}
+
++ (NSInteger)designResolutionWidth {
+    return ConfigDesignResolutionWidth;
+}
+
++ (void)setDesignResolutionWidth:(NSInteger)designResolutionWidth {
+    ConfigDesignResolutionWidth = designResolutionWidth;
+}
+
++ (NSInteger)designResolutionHeight {
+    return ConfigDesignResolutionHeight;
+}
+
++ (void)setDesignResolutionHeight:(NSInteger)designResolutionHeight {
+    ConfigDesignResolutionHeight = designResolutionHeight;
 }
 
 + (NSString *)crISBN {

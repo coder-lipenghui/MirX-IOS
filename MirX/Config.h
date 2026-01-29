@@ -56,6 +56,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (class, nonatomic, copy) NSArray<NSNumber *> *safeArea;
 
 /**
+ * 设计分辨率宽高
+ */
+@property (class, nonatomic, assign) NSInteger designResolutionWidth;
+@property (class, nonatomic, assign) NSInteger designResolutionHeight;
+
+/**
  * 游戏版号相关资料，可默认填写 后台有填写则会被覆盖
  */
 @property (class, nonatomic, copy) NSString *crISBN;
